@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   StatusBar,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import MusicCard from "./components/MusicCard";
@@ -16,6 +17,7 @@ import PlayerScreen from "./screens/PlayerScreen";
 import SearchScreen from "./screens/SearchScreen";
 import MyScreen from "./screens/MyScreen";
 import MyHomeScreen from "./screens/MyHomeScreen";
+import AIAssistantScreen from "./screens/AIAssistantScreen";
 
 // 从 assets 导入图片
 // Hero Cards 图片（正方形）
@@ -119,6 +121,7 @@ export default function App() {
   const [showPlayer, setShowPlayer] = useState(false);
   const [currentTab, setCurrentTab] = useState("home");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [showAI, setShowAI] = useState(false);
 
   const handleTogglePlay = () => {
     setIsPlaying(!isPlaying);
@@ -154,7 +157,10 @@ export default function App() {
             <View style={styles.header}>
               <Text style={styles.greeting}>Good Morning ~</Text>
               <View style={styles.headerIcons}>
-                <TouchableOpacity style={styles.headerIconButton}>
+                <TouchableOpacity
+                  style={styles.headerIconButton}
+                  onPress={() => setShowAI(true)}
+                >
                   <AIAssistantIcon size={30} color="#6FBDD3" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.headerIconButton}>
@@ -396,6 +402,16 @@ export default function App() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* AI 助手 Modal */}
+      <Modal
+        visible={showAI}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowAI(false)}
+      >
+        <AIAssistantScreen onClose={() => setShowAI(false)} />
+      </Modal>
     </View>
   );
 }
