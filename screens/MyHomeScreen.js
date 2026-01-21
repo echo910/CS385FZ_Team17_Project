@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,103 +6,279 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Image,
+  ScrollView,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import FavoritesScreen from "./FavoritesScreen";
+import RecentlyPlayedScreen from "./RecentlyPlayedScreen";
 
 const avatar = require("../assets/artist1.png");
-const vipBadge = require("../assets/album1.png"); // 临时代用作徽标示例，可替换为正式资源
 
-export default function MyHomeScreen({ onLogout }) {
+const THEME_BLUE = "#6FBDD3";
+
+export default function MyHomeScreen({
+  onLogout,
+  favorites = [],
+  recentlyPlayed = [],
+  aiPlaylists = [],
+  userPlaylists = [],
+  onPlaySong,
+  onRemoveFavorite,
+  onClearHistory,
+  onOpenSettings,
+  onOpenAI,
+  onSongLongPress,
+}) {
+  const [showFavorites, setShowFavorites] = useState(false);
+  const [showRecentlyPlayed, setShowRecentlyPlayed] = useState(false);
+
+  // 快捷功能数据
+  const quickActions = [
+    {
+      icon: "musical-notes-outline",
+      text: "本地音乐",
+      count: 0,
+      onPress: () => {},
+    },
+    {
+      icon: "heart-outline",
+      text: "我喜欢",
+      count: favorites.length,
+      color: "#FF6B6B",
+      onPress: () => setShowFavorites(true),
+    },
+    {
+      icon: "cloud-download-outline",
+      text: "已下载",
+      count: 0,
+      onPress: () => {},
+    },
+    {
+      icon: "time-outline",
+      text: "最近播放",
+      count: recentlyPlayed.length,
+      onPress: () => setShowRecentlyPlayed(true),
+    },
+  ];
+
+  // 列表项数据
+  const menuItems = [
+    { icon: "albums-outline", text: "我的歌单", badge: userPlaylists.length || null, onPress: () => {} },
+    { icon: "sparkles-outline", text: "AI 生成的歌单", badge: aiPlaylists.length || null, onPress: onOpenAI },
+    { icon: "star-outline", text: "收藏的歌单", onPress: () => {} },
+    { icon: "people-outline", text: "关注的歌手", onPress: () => {} },
+    { icon: "chatbubble-ellipses-outline", text: "我的评论", onPress: () => {} },
+    { icon: "settings-outline", text: "设置", onPress: onOpenSettings },
+  ];
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* 顶部栏 */}
-      <View style={styles.header}>
-        <Ionicons name="person-circle-outline" size={28} color="#fff" />
-        <Text style={styles.headerTitle}>My</Text>
-        <Ionicons name="settings-outline" size={24} color="#fff" />
-      </View>
-
-      {/* 头像卡片 */}
-      <View style={styles.profileCard}>
-        <View style={styles.avatarWrap}>
-          <Image source={avatar} style={styles.avatar} />
-          <View style={styles.vipCorner}>
-            <Image source={vipBadge} style={styles.vipIcon} />
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* 顶部栏 */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>My</Text>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity style={styles.headerIcon}>
+              <Ionicons name="scan-outline" size={22} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerIcon}>
+              <Ionicons name="settings-outline" size={22} color="#fff" />
+            </TouchableOpacity>
           </View>
         </View>
-        <View style={styles.profileInfo}>
-          <Text style={styles.name}>Cat Music Lover</Text>
-          <Text style={styles.subtitle}>ID: 18888888888</Text>
-          <View style={styles.statsRow}>
-            {[
-              { label: "关注", value: "128" },
-              { label: "粉丝", value: "2.4k" },
-              { label: "获赞", value: "8.6k" },
-            ].map((item) => (
-              <View key={item.label} style={styles.statBox}>
-                <Text style={styles.statValue}>{item.value}</Text>
-                <Text style={styles.statLabel}>{item.label}</Text>
+
+        {/* 用户信息卡片 */}
+        <View style={styles.profileCard}>
+          <View style={styles.profileLeft}>
+            <View style={styles.avatarWrap}>
+              <Image source={avatar} style={styles.avatar} />
+              <View style={styles.levelBadge}>
+                <Text style={styles.levelText}>6</Text>
               </View>
-            ))}
-          </View>
-        </View>
-        <TouchableOpacity style={styles.levelBadge} activeOpacity={0.85}>
-          <Text style={styles.levelText}>LV.6</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* VIP 横幅 */}
-      <View style={styles.banner}>
-        <View>
-          <Text style={styles.bannerTitle}>开通黑胶VIP</Text>
-          <Text style={styles.bannerDesc}>畅听高品质音乐 · 主题皮肤</Text>
-        </View>
-        <TouchableOpacity style={styles.bannerBtn} activeOpacity={0.85}>
-          <Text style={styles.bannerBtnText}>立即开通</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* 快捷功能 */}
-      <View style={styles.quickCard}>
-        {[
-          { icon: "musical-notes-outline", text: "本地音乐" },
-          { icon: "heart-outline", text: "我喜欢" },
-          { icon: "cloud-download-outline", text: "已下载" },
-          { icon: "star-outline", text: "收藏夹" },
-        ].map((item, idx) => (
-          <View key={item.text} style={[styles.quickItem, idx === 3 && { borderRightWidth: 0 }]}>
-            <Ionicons name={item.icon} size={22} color="#fff" />
-            <Text style={styles.quickText}>{item.text}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* 列表 */}
-      <View style={styles.list}>
-        {[
-          { icon: "time-outline", text: "最近播放" },
-          { icon: "albums-outline", text: "我的歌单" },
-          { icon: "chatbubble-ellipses-outline", text: "我的评论" },
-          { icon: "settings-outline", text: "设置" },
-        ].map((item, index) => (
-          <TouchableOpacity key={item.text} style={[styles.listItem, index < 3 && styles.listDivider]}>
-            <View style={styles.listLeft}>
-              <Ionicons name={item.icon} size={20} color="#fff" />
-              <Text style={styles.listText}>{item.text}</Text>
             </View>
+            <View style={styles.profileInfo}>
+              <Text style={styles.name}>Cat Music Lover</Text>
+              <Text style={styles.subtitle}>ID: 18888888888</Text>
+            </View>
+          </View>
+          <TouchableOpacity style={styles.editButton}>
             <Ionicons name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
-        ))}
-      </View>
+        </View>
 
-      {/* 退出 */}
-      <TouchableOpacity
-        style={styles.logoutBtn}
-        onPress={onLogout}
-        activeOpacity={0.85}
+        {/* 统计数据 */}
+        <View style={styles.statsRow}>
+          {[
+            { label: "关注", value: "128" },
+            { label: "粉丝", value: "2.4k" },
+            { label: "获赞", value: "8.6k" },
+            { label: "听歌", value: `${recentlyPlayed.length}` },
+          ].map((item, index) => (
+            <TouchableOpacity key={item.label} style={styles.statItem}>
+              <Text style={styles.statValue}>{item.value}</Text>
+              <Text style={styles.statLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* VIP 横幅 */}
+        <TouchableOpacity style={styles.vipBanner} activeOpacity={0.85}>
+          <View style={styles.vipLeft}>
+            <View style={styles.vipIcon}>
+              <Ionicons name="diamond" size={20} color="#FFD700" />
+            </View>
+            <View>
+              <Text style={styles.vipTitle}>开通黑胶VIP</Text>
+              <Text style={styles.vipDesc}>畅听高品质音乐 · 专属皮肤</Text>
+            </View>
+          </View>
+          <View style={styles.vipButton}>
+            <Text style={styles.vipButtonText}>立即开通</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* 快捷功能 */}
+        <View style={styles.quickCard}>
+          {quickActions.map((item, idx) => (
+            <TouchableOpacity
+              key={item.text}
+              style={[
+                styles.quickItem,
+                idx < quickActions.length - 1 && styles.quickItemBorder,
+              ]}
+              onPress={item.onPress}
+            >
+              <View style={styles.quickIconWrap}>
+                <Ionicons
+                  name={item.icon}
+                  size={24}
+                  color={item.color || "#fff"}
+                />
+                {item.count > 0 && (
+                  <View style={styles.quickBadge}>
+                    <Text style={styles.quickBadgeText}>{item.count}</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.quickText}>{item.text}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* AI 歌单展示 */}
+        {aiPlaylists.length > 0 && (
+          <View style={styles.aiPlaylistSection}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <Ionicons name="sparkles" size={18} color={THEME_BLUE} />
+                <Text style={styles.sectionTitle}>AI 生成的歌单</Text>
+              </View>
+              <TouchableOpacity>
+                <Text style={styles.seeAllText}>查看全部</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.aiPlaylistScroll}
+            >
+              {aiPlaylists.slice(0, 5).map((playlist, index) => (
+                <TouchableOpacity key={playlist.id || index} style={styles.aiPlaylistCard}>
+                  <View style={styles.aiPlaylistCover}>
+                    {playlist.songs?.[0]?.image ? (
+                      <Image
+                        source={playlist.songs[0].image}
+                        style={styles.aiPlaylistImage}
+                      />
+                    ) : (
+                      <Ionicons name="musical-notes" size={30} color="#666" />
+                    )}
+                    <View style={styles.aiPlaylistBadge}>
+                      <Text style={styles.aiPlaylistBadgeText}>AI</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.aiPlaylistTitle} numberOfLines={1}>
+                    {playlist.title}
+                  </Text>
+                  <Text style={styles.aiPlaylistCount}>
+                    {playlist.songs?.length || 0} 首
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* 菜单列表 */}
+        <View style={styles.menuList}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={item.text}
+              style={[
+                styles.menuItem,
+                index < menuItems.length - 1 && styles.menuItemBorder,
+              ]}
+              onPress={item.onPress}
+            >
+              <View style={styles.menuLeft}>
+                <Ionicons name={item.icon} size={22} color="#fff" />
+                <Text style={styles.menuText}>{item.text}</Text>
+              </View>
+              <View style={styles.menuRight}>
+                {item.badge && (
+                  <View style={styles.menuBadge}>
+                    <Text style={styles.menuBadgeText}>{item.badge}</Text>
+                  </View>
+                )}
+                <Ionicons name="chevron-forward" size={20} color="#666" />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* 退出登录 */}
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={onLogout}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.logoutText}>退出登录</Text>
+        </TouchableOpacity>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* 我喜欢 Modal */}
+      <Modal
+        visible={showFavorites}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowFavorites(false)}
       >
-        <Text style={styles.logoutText}>退出登陆</Text>
-      </TouchableOpacity>
+        <FavoritesScreen
+          onClose={() => setShowFavorites(false)}
+          favorites={favorites}
+          onPlaySong={onPlaySong}
+          onPlayAll={(songs) => onPlaySong?.(songs[0], songs)}
+          onRemoveFavorite={onRemoveFavorite}
+        />
+      </Modal>
+
+      {/* 最近播放 Modal */}
+      <Modal
+        visible={showRecentlyPlayed}
+        animationType="slide"
+        presentationStyle="fullScreen"
+        onRequestClose={() => setShowRecentlyPlayed(false)}
+      >
+        <RecentlyPlayedScreen
+          onClose={() => setShowRecentlyPlayed(false)}
+          recentlyPlayed={recentlyPlayed}
+          onPlaySong={onPlaySong}
+          onClearHistory={onClearHistory}
+        />
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -110,193 +286,320 @@ export default function MyHomeScreen({ onLogout }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1c1f22",
-    paddingHorizontal: 18,
-    paddingTop: 14,
+    backgroundColor: "#121212",
   },
+  // 顶部栏
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
   },
   headerTitle: {
     color: "#fff",
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: "700",
   },
+  headerIcons: {
+    flexDirection: "row",
+    gap: 16,
+  },
+  headerIcon: {
+    padding: 4,
+  },
+  // 用户信息
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#22272a",
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 14,
-    position: "relative",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  profileLeft: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatarWrap: {
-    marginRight: 12,
+    position: "relative",
+    marginRight: 14,
   },
   avatar: {
-    width: 68,
-    height: 68,
-    borderRadius: 14,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
   },
-  vipCorner: {
+  levelBadge: {
     position: "absolute",
-    bottom: -6,
-    right: -6,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: "#1c1f22",
+    bottom: -2,
+    right: -2,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: THEME_BLUE,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#121212",
   },
-  vipIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  levelText: {
+    color: "#000",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  profileInfo: {
+    justifyContent: "center",
   },
   name: {
     color: "#fff",
     fontSize: 20,
     fontWeight: "700",
+    marginBottom: 4,
   },
   subtitle: {
-    color: "rgba(255,255,255,0.7)",
-    marginTop: 4,
-    fontSize: 12,
+    color: "#888",
+    fontSize: 13,
   },
-  profileInfo: {
-    flex: 1,
+  editButton: {
+    padding: 8,
   },
-  levelBadge: {
-    backgroundColor: "#6fbdd3",
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  levelText: {
-    color: "#022251",
-    fontWeight: "700",
-    fontSize: 12,
-  },
+  // 统计
   statsRow: {
     flexDirection: "row",
-    marginTop: 10,
-    gap: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.05)",
   },
-  statBox: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    backgroundColor: "#1c1f22",
+  statItem: {
+    flex: 1,
+    alignItems: "center",
   },
   statValue: {
     color: "#fff",
+    fontSize: 18,
     fontWeight: "700",
-    fontSize: 14,
+    marginBottom: 4,
   },
   statLabel: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 11,
-    marginTop: 2,
+    color: "#888",
+    fontSize: 12,
   },
-  banner: {
+  // VIP 横幅
+  vipBanner: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#0545a2",
+    marginHorizontal: 16,
+    marginVertical: 16,
+    padding: 16,
+    backgroundColor: "#1a1a2e",
     borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255, 215, 0, 0.2)",
   },
-  bannerTitle: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "700",
+  vipLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  bannerDesc: {
-    color: "rgba(255,255,255,0.8)",
-    marginTop: 6,
-    marginBottom: 0,
+  vipIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 215, 0, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  vipTitle: {
+    color: "#FFD700",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  vipDesc: {
+    color: "#888",
     fontSize: 12,
   },
-  bannerBtn: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    paddingVertical: 8,
+  vipButton: {
+    backgroundColor: "#FFD700",
     paddingHorizontal: 14,
-    alignItems: "center",
+    paddingVertical: 8,
+    borderRadius: 16,
   },
-  bannerBtnText: {
-    color: "#0545a2",
-    fontWeight: "700",
+  vipButtonText: {
+    color: "#000",
     fontSize: 13,
+    fontWeight: "600",
   },
+  // 快捷功能
   quickCard: {
     flexDirection: "row",
-    backgroundColor: "#22272a",
+    marginHorizontal: 16,
+    backgroundColor: "#1E1E1E",
     borderRadius: 14,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+    marginBottom: 16,
   },
   quickItem: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 14,
+    paddingVertical: 18,
+  },
+  quickItemBorder: {
     borderRightWidth: 1,
-    borderRightColor: "rgba(255,255,255,0.06)",
-    gap: 6,
+    borderRightColor: "rgba(255,255,255,0.05)",
+  },
+  quickIconWrap: {
+    position: "relative",
+    marginBottom: 8,
+  },
+  quickBadge: {
+    position: "absolute",
+    top: -6,
+    right: -12,
+    backgroundColor: THEME_BLUE,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+    minWidth: 20,
+    alignItems: "center",
+  },
+  quickBadgeText: {
+    color: "#000",
+    fontSize: 10,
+    fontWeight: "700",
   },
   quickText: {
     color: "#fff",
     fontSize: 13,
   },
-  list: {
-    backgroundColor: "#22272a",
-    borderRadius: 14,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.06)",
+  // AI 歌单
+  aiPlaylistSection: {
+    marginBottom: 16,
   },
-  listItem: {
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  sectionTitle: {
+    color: "#fff",
+    fontSize: 17,
+    fontWeight: "600",
+  },
+  seeAllText: {
+    color: THEME_BLUE,
+    fontSize: 13,
+  },
+  aiPlaylistScroll: {
+    paddingHorizontal: 16,
+    gap: 12,
+  },
+  aiPlaylistCard: {
+    width: 120,
+    marginRight: 12,
+  },
+  aiPlaylistCover: {
+    width: 120,
+    height: 120,
+    borderRadius: 10,
+    backgroundColor: "#2a2a2a",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 8,
+    overflow: "hidden",
+  },
+  aiPlaylistImage: {
+    width: "100%",
+    height: "100%",
+  },
+  aiPlaylistBadge: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    backgroundColor: THEME_BLUE,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  aiPlaylistBadgeText: {
+    color: "#000",
+    fontSize: 10,
+    fontWeight: "700",
+  },
+  aiPlaylistTitle: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 2,
+  },
+  aiPlaylistCount: {
+    color: "#888",
+    fontSize: 12,
+  },
+  // 菜单列表
+  menuList: {
+    marginHorizontal: 16,
+    backgroundColor: "#1E1E1E",
+    borderRadius: 14,
+    marginBottom: 16,
+  },
+  menuItem: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
-  listDivider: {
+  menuItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.06)",
+    borderBottomColor: "rgba(255,255,255,0.05)",
   },
-  listLeft: {
+  menuLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
   },
-  listText: {
+  menuText: {
     color: "#fff",
     fontSize: 15,
   },
+  menuRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  menuBadge: {
+    backgroundColor: "rgba(111, 189, 211, 0.2)",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  menuBadgeText: {
+    color: THEME_BLUE,
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  // 退出按钮
   logoutBtn: {
-    marginTop: 8,
+    marginHorizontal: 16,
     backgroundColor: "transparent",
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 14,
+    paddingVertical: 16,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.2)",
+    borderColor: "rgba(255,255,255,0.15)",
   },
   logoutText: {
-    color: "#fff",
-    fontWeight: "700",
+    color: "#888",
+    fontWeight: "600",
     fontSize: 15,
   },
 });
-
-
